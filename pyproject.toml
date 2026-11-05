@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "shot-predict-ai"
+version = "0.1.0"
+description = "Local tennis shot annotation, temporal CNN training, and video prediction"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=2.0,<3",
+    "opencv-python-headless>=4.10,<5",
+    "torch>=2.6,<3",
+    "torchvision>=0.21,<1",
+    "streamlit>=1.50,<2",
+    "streamlit-image-coordinates>=0.4.1,<1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10"]
+players = ["ultralytics-opencv-headless>=8.4,<8.5"]
+
+[project.scripts]
+shot-train = "shot_predict.train:main"
+shot-export = "shot_predict.predict:main"
+
+[tool.setuptools.packages.find]
+include = ["shot_predict*"]
+
+[tool.setuptools.package-data]
+shot_predict = ["labeler_frontend/*.html", "labeler_frontend/*.css", "labeler_frontend/*.js"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

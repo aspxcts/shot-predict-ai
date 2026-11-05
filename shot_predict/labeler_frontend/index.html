@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shot labeling workspace</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="workspace" id="workspace">
+    <header class="topbar">
+      <div class="brand">TENNIS <strong>SHOT LAB</strong></div>
+      <label class="clip-picker">Clip <select id="clip" aria-label="Select clip"></select></label>
+      <button id="validate-toggle" class="mode-toggle" hidden title="One-look validation of machine-proposed shots across all analyzed clips">Validate: OFF</button>
+      <button id="review-toggle" class="mode-toggle" hidden title="Switch between the review queue and manual labeling">Review queue: OFF</button>
+      <div class="review-stats" id="review-stats"></div>
+      <div class="count" id="label-count">0 labels</div>
+    </header>
+    <main class="layout">
+      <section class="player-panel" aria-label="Video and timeline">
+        <div class="screen" id="screen">
+          <video id="video" playsinline preload="auto"></video>
+          <canvas id="overlay" tabindex="0" aria-label="Video frame: click a landing zone or court corners"></canvas>
+          <div class="loupe" id="loupe" hidden aria-hidden="true">
+            <canvas id="loupe-image" width="180" height="135"></canvas>
+            <span>BOUNCE ZOOM</span>
+          </div>
+          <div class="screen-message" id="screen-message">Loading video...</div>
+        </div>
+        <div class="scrubber">
+          <div class="time-row">
+            <strong id="time">00:00.00</strong>
+            <span id="frame-status">Frame 0</span>
+            <span id="duration"></span>
+          </div>
+          <input id="timeline" type="range" min="0" max="0" value="0" step="1" aria-label="Scrub video">
+        </div>
+        <div class="transport">
+          <button id="back-five" title="Back five seconds (J)">-5 s</button>
+          <button id="back-frame" title="Previous frame (Left arrow)">&larr; Frame</button>
+          <button id="play" class="play" title="Play or pause (Space)">Play</button>
+          <button id="forward-frame" title="Next frame (Right arrow)">Frame &rarr;</button>
+          <button id="forward-five" title="Forward five seconds (L)">+5 s</button>
+          <div class="transport-options">
+            <label class="compact-label">Speed
+              <select id="speed" aria-label="Playback speed">
+                <option value="0.25">0.25x</option>
+                <option value="0.5">0.5x</option>
+                <option value="1" selected>1x</option>
+                <option value="1.5">1.5x</option>
+                <option value="2">2x</option>
+              </select>
+            </label>
+            <button id="sound" class="quiet" title="Toggle sound">Sound on</button>
+            <label class="compact-label">Frame
+              <input id="frame-input" type="number" min="0" step="1" value="0" aria-label="Exact frame">
+            </label>
+          </div>
+        </div>
+      </section>
+      <aside class="workflow" aria-label="Labeling steps">
+        <div id="validate-panel" hidden>
+          <div class="eyebrow" id="validate-eyebrow">VALIDATE</div>
+          <h1 id="validate-title">Is this right?</h1>
+          <div class="chips" id="validate-chips"></div>
+          <p id="validate-help">The yellow line is the ball. Does it land in the purple zone?</p>
+          <button id="validate-correct" class="primary large">Correct <span>Enter</span></button>
+          <button id="validate-wrong" class="danger large">Wrong <span>X</span></button>
+          <div class="button-row">
+            <button id="validate-edit">Fix it <span>E</span></button>
+            <button id="validate-skip">Unsure <span>Q</span></button>
+          </div>
+          <div class="button-row">
+            <button id="validate-replay">Replay <span>R</span></button>
+            <button id="validate-undo">Undo <span>Z</span></button>
+          </div>
+          <div class="validate-stats" id="validate-stats"></div>
+          <button id="validate-audit" class="manual-link">Audit cards: ON <span>A</span></button>
+          <button id="validate-exit" class="manual-link">Back to review queue <span>V</span></button>
+        </div>
+        <div id="review-panel" hidden>
+          <div class="eyebrow" id="review-eyebrow">REVIEW QUEUE</div>
+          <h1 id="review-title">Contact?</h1>
+          <div class="chips" id="review-chips"></div>
+          <p id="review-help"></p>
+          <button id="review-accept" class="primary large">Accept <span>Enter</span></button>
+          <div class="section-label">Hitter and shot type</div>
+          <div class="button-row hit-buttons">
+            <button id="review-near" class="hit">Near <span>N</span></button>
+            <button id="review-far" class="hit">Far <span>F</span></button>
+          </div>
+          <div class="button-row">
+            <button id="review-groundstroke" class="choice">Groundstroke <span>G</span></button>
+            <button id="review-serve" class="choice">Serve <span>S</span></button>
+          </div>
+          <div class="button-row">
+            <button id="review-preview">Slow-mo <span>P</span></button>
+            <button id="review-back">Back <span>Bksp</span></button>
+          </div>
+          <div class="section-label">Not a usable shot?</div>
+          <div class="button-row">
+            <button id="review-reject" class="danger">Not a shot <span>X</span></button>
+            <button id="review-out">Out / net <span>K</span></button>
+            <button id="review-skip">Skip <span>Q</span></button>
+          </div>
+          <button id="review-manual" class="manual-link">Switch to manual labeling <span>M</span></button>
+        </div>
+        <div id="calibration-panel" hidden>
+          <div class="eyebrow">COURT SETUP</div>
+          <h1>Calibrate the court</h1>
+          <p>Pause on a clear court view. Click the four <strong>singles</strong> baseline corners in order.</p>
+          <ol class="corners">
+            <li id="corner-0">Near-left</li>
+            <li id="corner-1">Near-right</li>
+            <li id="corner-2">Far-right</li>
+            <li id="corner-3">Far-left</li>
+          </ol>
+          <p class="muted">Left and right are as you see them on screen. All four clicks use the same frame.</p>
+          <button id="save-court" class="primary large">Save court</button>
+          <button id="save-reference" class="large" title="For broadcast footage: one registration covers every clip from this camera, and the batch analyzes them all">Register this camera for all clips</button>
+          <div class="button-row">
+            <button id="reset-corners">Reset clicks</button>
+            <button id="cancel-court">Cancel</button>
+          </div>
+        </div>
+        <div id="label-panel" hidden>
+          <div class="eyebrow" id="phase">STEP 1 OF 2</div>
+          <h1 id="phase-title">Find racket contact</h1>
+          <p id="phase-help">Play or scrub to contact, then choose the hitter.</p>
+          <div id="choose-hit">
+            <div class="section-label">Shot type</div>
+            <div class="button-row">
+              <button id="groundstroke" class="choice selected" aria-pressed="true">Groundstroke</button>
+              <button id="serve" class="choice" aria-pressed="false">Serve</button>
+            </div>
+            <div class="section-label">Who hit the ball?</div>
+            <div class="button-row hit-buttons">
+              <button id="near" class="hit">Near <span>N</span></button>
+              <button id="far" class="hit">Far <span>F</span></button>
+            </div>
+          </div>
+          <div class="hit-summary" id="hit-summary">No contact marked yet.</div>
+          <button id="redo-hit" class="large" hidden>Clear marked hit</button>
+          <div class="divider"></div>
+          <div class="section-label">Court &amp; labels</div>
+          <div class="button-row">
+            <button id="recalibrate">Recalibrate</button>
+            <button id="undo">Undo last</button>
+          </div>
+          <button id="grid" class="grid-button">Hide court grid</button>
+        </div>
+        <div class="notice" id="notice" role="status" aria-live="polite"></div>
+        <div class="shortcuts" id="validate-shortcuts" hidden>
+          <strong>Validate shortcuts</strong>
+          <span>Enter / Y: correct &nbsp; | &nbsp; X / N: wrong &nbsp; | &nbsp; Q: unsure</span>
+          <span>E: fix in review &nbsp; | &nbsp; R: replay &nbsp; | &nbsp; Space: pause</span>
+          <span>Z / Ctrl+Z: undo &nbsp; | &nbsp; A: audits &nbsp; | &nbsp; V: leave</span>
+        </div>
+        <div class="shortcuts" id="review-shortcuts" hidden>
+          <strong>Review shortcuts</strong>
+          <span>Left / Right: nudge frame &nbsp; | &nbsp; , / .: nudge bounce</span>
+          <span>Click: set landing &nbsp; | &nbsp; Ctrl+Z: undo &nbsp; | &nbsp; [ ]: browse</span>
+        </div>
+        <div class="shortcuts" id="manual-shortcuts">
+          <strong>Shortcuts</strong>
+          <span>Space: play/pause</span>
+          <span>Left / Right or mouse wheel: one frame</span>
+          <span>Shift + arrows / wheel: one second</span>
+          <span>N / F: near / far hit &nbsp; | &nbsp; Ctrl+Z: undo</span>
+        </div>
+      </aside>
+    </main>
+  </div>
+  <script src="review_logic.js"></script>
+  <script src="labeler.js"></script>
+  <script src="review.js"></script>
+  <script src="validate.js"></script>
+</body>
+</html>
